@@ -1,80 +1,23 @@
-
-name: Creative Kart Build and Test
-
+name: Creative Kart Demo Build
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
-
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-
-      - name: Find project
-        id: project
-        shell: bash
-        run: |
-          FILE=$(find . -type f -name package.json \
-            -not -path '*/node_modules/*' \
-            -not -path '*/.git/*' | head -n 1)
-
-          if [ -z "$FILE" ]; then
-            echo "::error::No package.json found. Upload the app source first."
-            exit 1
-          fi
-
-          echo "dir=$(dirname "$FILE")" >> "$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        working-directory: ${{ steps.project.outputs.dir }}
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Build PWA
-        working-directory: ${{ steps.project.outputs.dir }}
-        run: npm run build
-
-      - name: Install Playwright browser
-        working-directory: ${{ steps.project.outputs.dir }}
-        shell: bash
-        run: |
-          if node -e "const p=require('./package.json');process.exit(p.devDependencies?.playwright || p.dependencies?.playwright || p.devDependencies?.['@playwright/test'] || p.dependencies?.['@playwright/test'] ? 0 : 1)"; then
-            npx playwright install --with-deps chromium
-          fi
-
-      - name: Run tests
-        working-directory: ${{ steps.project.outputs.dir }}
-        shell: bash
-        run: |
-          if node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
-            npm test
-          else
-            echo "No test script configured; skipping tests."
-          fi
-
-      - name: Upload website build
-        if: success()
-        uses: actions/upload-artifact@v4
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
         with:
-          name: creative-kart-dist
-          path: ${{ steps.project.outputs.dir }}/dist/
+          name: creative-kart-demo-dist
+          path: dist/
           if-no-files-found: error
-          
