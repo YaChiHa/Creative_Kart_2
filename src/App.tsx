@@ -48,17 +48,18 @@ export default function App(){
    setCloudReady(true);
  }
  useEffect(()=>{
-   if(!cloudEnabled||!supabase){setCloudReady(false);return}
+   const client=supabase;
+   if(!cloudEnabled||!client){setCloudReady(false);return}
    loadCloud().catch(e=>setNotice('Cloud connection needs setup: '+e.message));
-   const channel=supabase.channel('creative-kart-live')
+   const channel=client.channel('creative-kart-live')
      .on('postgres_changes',{event:'*',schema:'public',table:'products'},()=>loadCloud().catch(()=>{}))
      .on('postgres_changes',{event:'*',schema:'public',table:'store_settings'},()=>loadCloud().catch(()=>{}))
      .subscribe();
-   const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
+   const {data:{subscription}}=client.auth.onAuthStateChange((_event,session)=>{
      setAdmin(Boolean(session));
      if(session){loadCloud().catch(e=>setNotice(e.message));loadEnquiries();}
    });
-   return()=>{subscription.unsubscribe();supabase.removeChannel(channel)};
+   return()=>{subscription.unsubscribe();client.removeChannel(channel)};
  },[]);
  useEffect(()=>{if(page==='admin'&&admin)loadEnquiries()},[page,admin]);
  async function loadEnquiries(){
