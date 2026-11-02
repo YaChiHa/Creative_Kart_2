@@ -72,6 +72,7 @@ export default function App(){
  function summary(ref:string){return 'Hello Creative Kart! I would like to enquire.\nReference: '+ref+'\n'+cart.map(c=>{const p=products.find(x=>x.id===c.id)!;return p.name+' × '+c.qty+' — '+money(p.price*c.qty)}).join('\n')+'\nSubtotal: '+money(total)+'\nPlease confirm availability and purchase arrangements.'}
  async function submitEnquiry(){
    if(!cart.length||!customer.trim()||!phone.trim()){setNotice('Add items, your name and phone number first.');return}
+   const contactWindow=wa?window.open('about:blank','_blank'):null;
    const reference='CK-'+Date.now().toString(36).toUpperCase();
    const enquiry={reference,customer_name:customer.trim(),phone:phone.trim(),items:cart.map(c=>{const p=products.find(x=>x.id===c.id)!;return{id:p.id,name:p.name,quantity:c.qty,price:p.price}}),total,status:'Enquiry received'};
    if(cloudEnabled&&supabase){
@@ -82,7 +83,7 @@ export default function App(){
      localStorage.setItem('ck-enquiries',JSON.stringify(next));setEnquiries(next);
    }
    const text=summary(reference);setCart([]);setPage('shop');
-   if(wa)window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');
+   if(contactWindow)contactWindow.location.href='https://wa.me/'+wa+'?text='+encodeURIComponent(text);
    else setNotice('Enquiry saved. WhatsApp contact has not been configured yet.');
  }
  async function login(e:React.FormEvent){
